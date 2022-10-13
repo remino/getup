@@ -7,6 +7,9 @@ Get up and run some things.
 
 - [Description](#description)
 - [Installation](#installation)
+	- [Using Homebrew on macOS](#using-homebrew-on-macos)
+	- [Using Git](#using-git)
+	- [Using cURL](#using-curl)
 - [Usage](#usage)
 - [Manual Settings](#manual-settings)
 
@@ -21,9 +24,28 @@ when it needs to.
 
 ## Installation
 
+### Using Homebrew on macOS
+
 ```sh
 brew tap remino/remino
 brew install getup
+getup
+```
+
+### Using Git
+
+```sh
+git clone git@github.com:remino/getup.git
+cd getup
+./getup
+```
+
+### Using cURL
+
+```sh
+curl -sL https://raw.githubusercontent.com/remino/getup/master/getup > getup
+chmod a+x getup
+./getup
 ```
 
 ## Usage
