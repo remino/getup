@@ -5,6 +5,20 @@ By Rémino Rem <https://remino.net/>
 
 Get up and run some things.
 
+- [Description](#description)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Manual Settings](#manual-settings)
+
+## Description
+
+This is a personal script to help me set up common things on a new computer,
+usually a Mac. Instead of having to remember all the steps to set up everything,
+I copy this script to the new computer and run it, or just run the parts I need.
+
+This script is not meant to be run as root, but it will ask for your password
+when it needs to.
+
 ## Installation
 
 ```sh
@@ -63,3 +77,8 @@ OPTIONS:
 	-v            Show version.
 
 ```
+
+## Manual Settings
+
+This script cannot set up everything. For what I normally have to set manually,
+see [Manual Settings](settings.md).
