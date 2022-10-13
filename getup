@@ -1,0 +1,1042 @@
+#!/bin/sh
+# getup
+
+VERSION='1.0.0'
+
+getup_main() {
+	scriptpath="$0"
+	scriptname="$( basename "$scriptpath" )"
+	scriptdir="$( dirname "$scriptpath" )"
+	scriptpath="$( cd "$scriptdir" || exit; pwd )/$scriptname"
+
+	e_args=16
+	e_no_full_disk=17
+	e_missing_app=18
+	e_not_mac=19
+	e_aborted=20
+	e_no_ssh_key=21
+	e_not_mac=22
+	e_missing_username=26
+	e_missing_file=27
+
+	PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
+
+	brew_cleanup=0
+	default_ssh_key="$HOME/.ssh/keys/id"
+	force_yes=0
+	full_disk_access=0
+	restart_dock=0
+	restart_finder=0
+	setup_ssh_key="$HOME/.setup_ssh_key"
+
+	while getopts hvy opt
+	do
+		case $opt in
+			h) getup_usage && return ;;
+			v) getup_version && return ;;
+			y) force_yes=1 ;;
+			*) _invalid_opt ;;
+		esac
+	done
+
+	shift $(( OPTIND - 1 ))
+
+	[ -z "$cmd" ] && cmd="$1"
+	shift
+
+	[ -z "$cmd" ] && cmd="help"
+
+	case "$cmd" in
+		all|\
+		asdf|\
+		brewapps|\
+		brewcask|\
+		cleanup|\
+		crontab|\
+		darkmode|\
+		dock|\
+		dotfiles|\
+		finder|\
+		fonts|\
+		fulldisk|\
+		gcloud|\
+		gpg|\
+		homebrew|\
+		masapps|\
+		mkdirs|\
+		ohmyzsh|\
+		omzplugins|\
+		pamtouchid|\
+		python|\
+		reminoutils|\
+		safari|\
+		safaridev|\
+		secrets|\
+		settings|\
+		shell|\
+		sshkey|\
+		workspace)
+			_pre
+			"getup_$cmd" "$@"
+			_post
+			;;
+		help|usage) getup_usage ;;
+		version) getup_version ;;
+		*) _invalid_cmd ;;
+	esac
+
+	return $?
+}
+
+getup_all() {
+	_require_full_disk_access
+
+	for part in \
+		darkmode \
+		mkdirs \
+		sshkey \
+		gpg \
+		shell \
+		pamtouchid \
+		dotfiles \
+		crontab \
+		safari \
+		settings \
+		ohmyzsh \
+		omzplugins \
+		homebrew \
+		brewapps \
+		brewcask \
+		asdf \
+		masapps \
+		python \
+		gcloud \
+		reminoutils \
+		fonts \
+		workspace \
+		;
+	do
+		"getup_$part" "$@"
+	done
+}
+
+getup_brewapps() {
+	getup_homebrew
+
+	_echo "Installing Homebrew apps (non-cask)..."
+
+	brew install \
+		asdf \
+		awscli \
+		bat \
+		cmake \
+		coreutils \
+		docker-compose \
+		ffmpeg \
+		gh \
+		git \
+		git-crypt \
+		git-extras \
+		imagemagick \
+		jq \
+		karabiner-elements \
+		mas \
+		mysql-client \
+		openssl \
+		p7zip \
+		pam-reattach \
+		qrencode \
+		reattach-to-user-namespace \
+		ripgrep \
+		shellcheck \
+		terraform \
+		tmux \
+		trash \
+		tree \
+		wget \
+		yadm \
+		zip \
+		;
+
+	_require_brew_cleanup
+}
+
+getup_asdf() {
+	_echo "Installing asdf..."
+
+	[ -d "$HOME/.asdf" ] && return
+
+	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
+	asdf plugin add ruby https://github.com/asdf-vm/asdf-ruby.git
+	asdf plugin-add python
+}
+
+getup_brewcask() {
+	getup_homebrew
+
+	_echo "Installing Homebrew cask apps..."
+
+	# Firefox, Google Chrome, and Zoom are pre-installed.
+	# Some apps require purchases.
+
+	brew install --cask \
+		1password \
+		1password-cli \
+		box-sync \
+		choosy \
+		docker \
+		emojipedia \
+		gpg-suite \
+		inkscape \
+		iterm2 \
+		orion \
+		raycast \
+		shortcat \
+		slack \
+		viber \
+		visual-studio-code \
+		;
+
+	_require_brew_cleanup
+}
+
+getup_cleanup() {
+	_echo "Cleaning up..."
+	[ -f "$setup_ssh_key" ] && rm "$setup_ssh_key"
+}
+
+getup_crontab() {
+	getup_dotfiles
+
+	crontab="$HOME/.config/crontab"
+
+	[ ! -f "$crontab" ] \
+		&& _error "No crontab found: $crontab" \
+		&& return $e_missing_file
+
+	_echo "Installing crontab..."
+	crontab "$crontab"
+}
+
+getup_darkmode() {
+	_mac_only || return
+	_echo "Setting Dark Mode..."
+	osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to yes'
+}
+
+getup_dock() {
+	_mac_only || return
+	_require_full_disk_access
+
+	_echo "Setting up Dock..."
+
+	# Set minimize effect to scale
+	defaults write com.apple.dock mineffect -string scale
+
+	# Setting the icon size of Dock items to 36 pixels for optimal size/screen-realestate
+	defaults write com.apple.dock tilesize -int 36
+
+	# Speeding up Mission Control animations and grouping windows by application
+	defaults write com.apple.dock expose-animation-duration -float 0.1
+	defaults write com.apple.dock expose-group-by-app -bool true
+
+	# Setting Dock to auto-hide and removing the auto-hiding delay
+	defaults write com.apple.dock autohide -bool true
+	defaults write com.apple.dock autohide-delay -float 0
+	defaults write com.apple.dock autohide-time-modifier -float 0
+
+	# Don’t automatically rearrange Spaces based on most recent use
+	defaults write com.apple.dock mru-spaces -bool false
+
+	# Dock magnification
+	defaults write com.apple.dock magnification -bool true
+	defaults write com.apple.dock largesize -float 64
+
+	# Move Dock to bottom
+	defaults write com.apple.dock orientation -string bottom
+
+	_require_dock_restart
+}
+
+getup_dotfiles() {
+	[ -d "$HOME/.local/share/yadm" ] \
+		&& _error "Dotfiles already installed." \
+		&& return 0
+
+	_require_ssh_key
+	_require brew yadm
+
+	_exists yadm || brew install yadm
+
+	[ -z "$DOTFILES_REPO_URL" ] && _fatal $e_args "DOTFILES_REPO_URL not set."
+
+	ghuser="$( whoami | sed 's/\./-/g' )"
+	[ -z "$ghuser" ] && _fatal $e_missing_username "Missing username"
+
+	if [ -d "$HOME/.local/share/yadm/repo.git" ]
+	then
+		_error "Dotfiles repo was already cloned."
+	else
+		GIT_SSH_COMMAND="ssh -i '$( _ssh_key_path )'" \
+			yadm clone "$DOTFILES_REPO_URL"
+
+		yadm checkout .ssh/known_hosts
+	fi
+
+	getup_keys
+}
+
+getup_finder() {
+	_mac_only || return
+	_require_full_disk_access
+
+	_echo "Setting up Finder..."
+
+	# Showing all filename extensions in Finder by default
+	defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+
+	# Small sidebar icons in Finder
+	defaults write NSGlobalDomain NSTableViewDefaultSizeMode -int 2
+
+	# Showing icons for hard drives, servers, and removable media on the desktop
+	defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool true
+
+	# Allow text selection in Quick Look
+	defaults write com.apple.finder QLEnableTextSelection -bool TRUE
+
+	# Disabling the warning when changing a file extension
+	defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+
+	# Use column view in all Finder windows by default
+	defaults write com.apple.finder FXPreferredViewStyle Clmv
+
+	# Avoiding the creation of .DS_Store files on network volumes
+	defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+
+	# Search current folder by default
+	defaults write com.apple.finder FXDefaultSearchScope -string  SCcf
+
+	# Show path bar in Finder
+	defaults write com.apple.finder ShowPathbar -bool true
+
+	# Show status bar in Finder
+	defaults write com.apple.finder ShowStatusBar -bool true
+
+	# Enabling snap-to-grid for icons on the desktop and in other icon views
+	/usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:arrangeBy grid" ~/Library/Preferences/com.apple.finder.plist
+	/usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:arrangeBy grid" ~/Library/Preferences/com.apple.finder.plist
+	/usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:arrangeBy grid" ~/Library/Preferences/com.apple.finder.plist
+
+	# Add alias to home folder on Desktop.
+	osascript \
+		-e 'tell application "Finder"' \
+		-e "make new alias to folder (posix file \"$HOME\") at desktop" \
+		-e 'end tell'
+
+	_require_finder_restart
+}
+
+getup_fonts() {
+	_error "Installing fonts..."
+
+	brew tap homebrew/cask-fonts
+	brew install font-sarasa-gothic
+}
+
+getup_fulldisk() {
+	_mac_only || return
+	if _has_full_disk_access
+	then
+		_echo "Script has Full Disk Access."
+	else
+		_echo "Script does not have Full Disk Access."
+	fi
+}
+
+getup_gcloud() {
+	getup_python
+
+	_echo "Installing GCloud and setting up SRE environment..."
+
+	_load_gcloud
+
+	if _exists gcloud
+	then
+		_echo "GCloud is already installed."
+	else
+		_echo "Installing GCloud..."
+		install_path="$( mktemp "/tmp/${scriptname}.XXXXXX" )"
+		curl https://sdk.cloud.google.com > "$install_path"
+		bash "$install_path" --disable-prompts --install-dir="$HOME"
+		_load_gcloud
+	fi
+
+	_echo "Installing kubectl..."
+	gcloud components install kubectl --quiet
+
+	_echo "Authenticating..."
+	gcloud auth print-access-token > /dev/null 2>&1 \
+		|| gcloud auth login \
+	;
+	gcloud auth application-default print-access-token > /dev/null 2>&1 \
+		|| gcloud auth application-default login \
+	;
+}
+
+getup_gpg() {
+	_exists gpg || brew install --cask gpg-suite
+	_require gpg
+
+	_echo "Importing private GPG key..."
+
+	_echo
+	_echo "Paste your private GPG key below, then hit Enter and Ctrl-D:"
+	_echo
+
+	gpg --import
+}
+
+getup_homebrew() {
+	_require_full_disk_access
+
+	if [ ! -x "/usr/local/bin/brew" ] && [ ! -x "/opt/homebrew/bin/brew" ]
+	then
+		_echo "Installing Homebrew..."
+		/bin/bash -c "$( curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh )"
+	else
+		_echo "Homebrew is already installed."
+	fi
+
+	# Add Homebrew to path on M1 Mac
+	if [ ! -x "/usr/local/bin/brew" ] && [ -x "/opt/homebrew/bin/brew" ]
+	then
+		if ! grep 'brew shellenv' "$HOME/.zshrc" > /dev/null 2>&1
+		then
+			# shellcheck disable=SC2016
+			echo 'eval "$( /opt/homebrew/bin/brew shellenv )"' >> "$HOME/.zshrc"
+		fi
+
+		eval "$( /opt/homebrew/bin/brew shellenv )"
+	fi
+}
+
+getup_masapps() {
+	_mac_only || return
+	_require mas
+
+	_mas_apps | while read -r id rest
+	do
+		mas install "$id"
+	done
+}
+
+getup_mkdirs() {
+	_echo "Setting up extra directories..."
+
+	for dir in bin opt Sites
+	do
+		if [ ! -d "$HOME/$dir" ]
+		then
+			_echo "$HOME/$dir"
+			mkdir -p "$HOME/$dir"
+		fi
+	done
+}
+
+getup_ohmyzsh() {
+	sh -c "$( curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh )"
+}
+
+getup_omzplugins() {
+	[ ! -d "$HOME/.oh-my-zsh/custom/plugins" ] && getup_ohmyzsh
+
+	_omzplugins | while read -r url name
+	do
+		git clone "$url" "$HOME/.oh-my-zsh/custom/plugins/$name"
+	done
+}
+
+getup_pamtouchid() {
+	_mac_only || return
+
+	PAM_SUDO="/etc/pam.d/sudo"
+
+	_echo "Adding Touch ID to PAM for sudo..."
+
+	if [ $force_yes -eq 0 ]
+	then
+		_echo
+		_echo "WARNING: This will add Touch ID to PAM so it can be used"
+		_echo "instead of a password to authenticate with sudo."
+		_echo "For this, $PAM_SUDO must be modified. This will trigger an"
+		_echo "alert to the security team. Once the case is explained,"
+		_echo "however, they will likely classify it as False Positive (FP)."
+		_echo "Doing this also require sudo, for which you will have to provide"
+		_echo "your account password."
+		_echo
+
+		if ! _confirm "Do you wish to add Touch ID to PAM?"
+		then
+			_error "Aborted addition of Touch ID to PAM."
+			return $e_aborted
+		fi
+	fi
+
+	return
+
+	_require_full_disk_access
+
+	PAM_SUDO_TEMP="$( mktemp -t sudo )"
+	SUDOERS="/etc/sudoers"
+
+	if grep -F pam_tid.so "$PAM_SUDO" > /dev/null 2>&1
+	then
+		awk -v text="auth sufficient pam_tid.so" '!/^#/ && !p {print text; p=1} 1' \
+			"$PAM_SUDO" > "$PAM_SUDO_TEMP"
+		sudo chmod 444 "$PAM_SUDO_TEMP"
+		sudo chown root:wheel "$PAM_SUDO_TEMP"
+		sudo mv -f "$PAM_SUDO_TEMP" "$PAM_SUDO"
+
+		MY_USERNAME="$( whoami )"
+		if grep -F "$MY_USERNAME" "$SUDOERS" > /dev/null 2>&1
+		then
+			sudo chmod u+w "$SUDOERS"
+			echo "$MY_USERNAME ALL = (ALL) ALL" >> "$SUDOERS"
+			sudo chmod u-w "$SUDOERS"
+		fi
+	else
+		echo "Already there"
+	fi
+}
+
+getup_python() {
+	_exists asdf || brew install asdf
+
+	_echo "Installing Python..."
+
+	_echo "Installing Python 2..."
+	_python_install 2
+
+	_echo "Installing Python 3..."
+	_python_install 3
+
+	_echo "Setting Python 3 as global version..."
+	asdf global python "$( asdf list python | _python_filter_latest_stable_version 3 )"
+}
+
+getup_reminoutils() {
+	_echo "Installing rémino utils..."
+
+	_require brew
+
+	brew tap remino/remino
+
+	brew install \
+		remino/remino/findfile \
+		remino/remino/ifip \
+		remino/remino/iftttnotify \
+		remino/remino/maconf \
+		remino/remino/mkx \
+		remino/remino/movie2gif \
+		remino/remino/urlsha \
+		remino/remino/vidmod \
+		remino/remino/waituntil \
+	;
+
+	_repos_reminoutils | while read -r url
+	do
+		REPO_NAME="$( basename "$url" .git )"
+		CLONE_DIR="$HOME/opt/$REPO_NAME"
+
+		if [ -d "$CLONE_DIR" ]
+		then
+			_error "Already exists: $REPO_NAME"
+		else
+			git clone "$url" "$CLONE_DIR"
+		fi
+
+		link="$HOME/bin/$REPO_NAME"
+
+		if [ ! -e "$link" ]
+		then
+			ln -s "../opt/$REPO_NAME/$REPO_NAME" "$link"
+		fi
+	done
+}
+
+getup_safari() {
+	_mac_only || return
+	_require_full_disk_access
+
+	_echo "Setting up Safari..."
+
+	# Hiding Safari's bookmarks bar by default
+	defaults write com.apple.Safari ShowFavoritesBar -bool false
+
+	# Hiding Safari's sidebar in Top Sites
+	defaults write com.apple.Safari ShowSidebarInTopSites -bool false
+
+	# Disabling Safari's thumbnail cache for History and Top Sites
+	defaults write com.apple.Safari DebugSnapshotsUpdatePolicy -int 2
+
+	# Enabling Safari's debug menu
+	defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
+
+	# Making Safari's search banners default to Contains instead of Starts With
+	defaults write com.apple.Safari FindOnPageMatchesWordStartsOnly -bool false
+
+	# Allow hitting the Backspace key to go to the previous page in history
+	defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2BackspaceKeyNavigationEnabled -bool true
+
+	getup_safaridev
+}
+
+getup_safaridev() {
+	_mac_only || return
+	_require_full_disk_access
+
+	_echo "Enabling Develop menu in Safari and WebView..."
+
+	# Enabling the Develop menu and the Web Inspector in Safari
+	defaults write com.apple.Safari IncludeDevelopMenu -bool true
+	defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+	defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true
+	defaults write com.apple.Safari.SandboxBroker ShowDevelopMenu -bool true
+
+	# Adding a context menu item for showing the Web Inspector in web views
+	defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
+}
+
+getup_secrets() {
+	_exists git-crypt || brew install git-crypt
+	_require git-crypt
+
+	secrets_dir="$HOME/.secrets"
+
+	[ -z "$SECRETS_REPO_URL" ] && _fatal $e_args "Missing SECRETS_REPO_URL"
+
+	if [ -d "$secrets_dir" ]
+	then
+		_error "Secrets were already cloned."
+	else
+		GIT_SSH_COMMAND="ssh -i '$( _ssh_key_path )'" \
+			git clone "$SECRETS_REPO_URL" "$secrets_dir"
+	fi
+
+	GIT_WORK_TREE="$secrets_dir" GIT_DIR="$secrets_dir/.git" \
+		git-crypt unlock
+	result=$?
+
+	if [ $result -gt 0 ]
+	then
+		_error "It looks like unlocking the secrets failed."
+		_error "Try importing your private GPG key first: $scriptname gpg"
+	fi
+
+	chmod -R go-rwx \
+		"$HOME/.netrc" \
+		"$HOME/.ssh" \
+		;
+}
+
+getup_settings() {
+	_mac_only || return
+	_require_full_disk_access
+
+	# Speeding up wake from sleep to 24 hours from an hour
+	# http://www.cultofmac.com/221392/quick-hack-speeds-up-retina-macbooks-wake-from-sleep-os-x-tips/
+	sudo pmset -a standbydelay 86400
+
+	# Disabling system-wide resume
+	defaults write NSGlobalDomain NSQuitAlwaysKeepsWindows -bool false
+
+	# Disabling automatic termination of inactive apps
+	defaults write NSGlobalDomain NSDisableAutomaticTermination -bool true
+
+	# Expanding the save panel by default
+	defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+	defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+	defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+
+	# Saving to disk (not to iCloud) by default
+	defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
+
+	# Enabling full keyboard access for all controls (e.g. enable Tab in modal dialogs)
+	defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
+
+	# Enabling subpixel font rendering on non-Apple LCDs
+	defaults write NSGlobalDomain AppleFontSmoothing -int 2
+
+	# Disabling press-and-hold for keys in favor of a key repeat
+	defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+
+	# Jump to clicked spot in scrollbar
+	defaults write NSGlobalDomain AppleScrollerPagingBehavior -int 1
+
+	# Trackpad tap to click
+	defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+	defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+
+	# Automatically quit printer app once the print jobs complete
+	defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
+
+	# Check for software updates daily, not just once per week
+	defaults write com.apple.SoftwareUpdate ScheduleFrequency -int 1
+
+	# Setting trackpad & mouse speed to a reasonable number
+	defaults write -g com.apple.trackpad.scaling 2
+	defaults write -g com.apple.mouse.scaling 2.5
+
+	# Setting email addresses to copy as 'foo@example.com' instead of 'Foo Bar <foo@example.com>' in Mail.app
+	defaults write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
+
+	# Disable annoying backswipe in Chrome
+	defaults write com.google.Chrome AppleEnableSwipeNavigateWithScrolls -bool false
+
+	# Setting screenshots location to ~/Desktop
+	defaults write com.apple.screencapture location -string "$HOME/Box Sync/User/Screenshots"
+
+	# Setting screenshot format to PNG
+	defaults write com.apple.screencapture type -string  png
+
+	getup_dock
+	getup_finder
+	getup_safari
+
+	_require_finder_restart
+}
+
+getup_shell() {
+	chsh -s /bin/zsh
+}
+
+getup_sshkey() {
+	ssh_key="$( _ssh_key_path )"
+
+	if [ -n "$ssh_key" ]
+	then
+		_echo "SSH key already available: $ssh_key"
+		return
+	fi
+
+	touch "$setup_ssh_key"
+	chmod go-rwx "$setup_ssh_key"
+
+	_echo
+	_echo "Get your private SSH key to be used on github.com,"
+	_echo "paste it here, then hit Enter and Ctrl+D once you're done:"
+	_echo
+
+	cat > "$setup_ssh_key"
+
+	[ ! -s "$setup_ssh_key" ] && _fatal $e_no_ssh_key "File seems empty or missing: $setup_ssh_key"
+}
+
+getup_workspace() {
+	_require_ssh_key
+
+	getup_brewapps
+	getup_mkdirs
+
+	_require realpath
+
+	_echo "Setting up workspace and related repos..."
+
+	[ -z "$WORKSPACE_REPO_URL" ] && _fatal $e_args "Missing WORKSPACE_REPO_URL"
+
+	if [ ! -d "$HOME/Sites/workspace" ]
+	then
+		GIT_SSH_COMMAND="ssh -i '$( _ssh_key_path )'" \
+			git clone "$WORKSPACE_REPO_URL" "$HOME/Sites/workspace"
+	fi
+
+	if [ -x "$HOME/Sites/workspace/workspace" ]
+	then
+		"$HOME/Sites/workspace/workspace" clone "$HOME/Sites"
+	else
+		_error "Missing workspace script."
+		return $e_missing_app
+	fi
+}
+
+getup_usage() {
+cat <<USAGE
+$scriptname $VERSION
+
+Usage: $scriptname [<options>] <command>
+
+Get up and run some things.
+
+SETUP PORTIONS:
+
+	asdf          Install asdf and pugins.
+	brewapps      Install Homebrew apps (non-cask).
+	brewcask      Install Homebrew cask apps.
+	crontab       Install crontab.
+	darkmode      Enable Dark Mode.
+	dotfiles      Clone and set up dot files using yadm from DOTFILES_REPO_URL.
+	dock          Set up Dock.
+	cleanup       Clean up after setup.
+	finder        Set up Finder.
+	gcloud        Install GCloud.
+	gpg           Import private GPG key.
+	homebrew      Install Homebrew (not apps).
+	masapps       Install Mac App Store apps using mas.
+	mkdirs        Create extra empty dirs.
+	ohmyzsh       Install Oh My Zsh.
+	omzplugins    Install Oh My Zsh custom plugins.
+	pamtouchid    Enable Touch ID for sudo via PAM.
+	python        Install Python 2 and Python 3 using asdf.
+	reminoutils   Clone and link Rémino util repos.
+	safari        Set up Safari. Includes: safaridev.
+	safaridev     Enable Develop menu in Safari.
+	secrets       Clone secret files from git repo at SECRETS_REPO_URL.
+	settings      Set up macOS preferences. Includes: dock, finder, safari.
+	shell         Change default shell to Zsh.
+	sshkey        Add setup SSH key.
+	workspace     Clone and set up workspace from WORKSPACE_REPO_URL.
+
+COMMANDS:
+
+	all           Setup all the portions listed above.
+	fulldisk      Check whether or not script has Full Disk Access.
+	help          Show this help screen.
+	version       Show version.
+
+OPTIONS:
+
+	-h            Show this help screen.
+	-v            Show version.
+
+USAGE
+}
+
+getup_version() {
+	_echo "$scriptname $VERSION"
+}
+
+_cd() {
+	cddir="$1"
+	cd "$cddir" > /dev/null 2>&1 || _fail "Cannot changed into directory: $cddir"
+}
+
+_confirm() {
+	[ "$force_yes" = "1" ] && return
+
+	_echo "$* (y|N)"
+	read -r in
+
+	case "$( echo "$in" | grep -o '^.' )" in
+		Y|y) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+_echo() {
+	echo "$@"
+}
+
+_error() {
+	_echo "$@" >&2
+}
+
+_exists() {
+	which "$1" > /dev/null 2>&1
+}
+
+_fatal() {
+	exit_code="$1"
+	shift
+	_error "$@"
+	exit "$exit_code"
+}
+
+_has_full_disk_access() {
+	[ $full_disk_access -eq 1 ] && return 0
+
+	file=/Library/Preferences/com.apple.TimeMachine.plist
+
+	if [ -f "$file" ] && cat "$file" > /dev/null 2>&1
+	then
+		full_disk_access=1
+		return 0
+	fi
+
+	return 1
+}
+
+_invalid_cmd() {
+	_error "Invalid command: $cmd"
+	_echo
+	getup_usage
+	exit $e_args
+}
+
+_invalid_opt() {
+	_error "Invalid option: $opt"
+	_echo
+	getup_usage
+	exit $e_args
+}
+
+_is_mac() {
+	[ "$( uname )" = "Darwin" ]
+}
+
+_load_asdf() {
+	_exists asdf && return
+	for init in /usr/local/opt/asdf/libexec/asdf.sh /opt/homebrew/opt/asdf/libexec/asdf.sh
+	do
+		[ ! -f "$init" ] && continue
+		# shellcheck source=/dev/null
+		. "$init"
+		return
+	done
+}
+
+_load_gcloud() {
+	_exists gcloud && return
+	dir="$HOME/google-cloud-sdk/bin"
+	[ -d "$dir" ] && PATH="$dir:$PATH"
+}
+
+_mac_only() {
+	_is_mac && return
+	_error "This command is only available on macOS."
+	return $e_not_mac
+}
+
+_mas_apps() {
+	# Note some of the apps must be purchased.
+cat << APPS
+1569813296 1Password for Safari
+640199958 Apple Developer
+1588019370 Custom Search Engine
+1494023538 Plash
+441258766 Magnet
+1452453066 Hidden Bar
+775737590 iA Writer
+425424353 The Unarchiver
+1526844137 Search Key
+1463298887 Userscripts
+784801555 Microsoft OneNote
+497799835 Xcode
+APPS
+}
+
+_omzplugins() {
+cat << PLUGINS
+https://github.com/tamcore/autoupdate-oh-my-zsh-plugins autoupdate
+https://github.com/remino/omz-plugin-git-aliases git-aliases
+https://github.com/remino/omz-plugin-mysql-alias mysql-alias
+PLUGINS
+}
+
+_post() {
+	[ $restart_dock -eq 1 ] && _echo "Restarting Dock..." && killall Dock
+	[ $restart_finder -eq 1 ] && _echo "Restarting Finder..." && killall Finder
+	[ $brew_cleanup -eq 1 ] && _echo "Cleaning up Homebrew..." && brew cleanup
+}
+
+_pre() {
+	_require_mac
+}
+
+_python_filter_latest_stable_version() {
+	_load_asdf
+
+	_require asdf
+
+	major="$1"
+
+	sed -E 's/^[\* ]*//' \
+		| grep "^$major\." \
+		| grep -Ev -- '(-dev|b\d+|rc\d+)$' \
+		| sed -E 's/ .*$//' \
+		| sort -V \
+		| tail -1 \
+	;
+}
+
+_python_install() {
+	major="$1"
+	latest="$( asdf list all python | _python_filter_latest_stable_version "$major" )"
+	installed="$( asdf list python | _python_filter_latest_stable_version "$major" )"
+	[ "$latest" != "$installed" ] && asdf install python "$latest" && return
+	_echo "Python version already installed: $installed"
+}
+
+_require() {
+	missing_app=0
+
+	for app in "$@"
+	do
+		if ! _exists "$app"
+		then
+			missing_app=1
+			_error "Required: $app"
+		fi
+	done
+
+	if [ $missing_app -ne 0 ]
+	then
+		_fatal $e_missing_app "One or more executables or apps are missing."
+	fi
+}
+
+_require_brew_cleanup() {
+	brew_cleanup=1
+}
+
+_require_dock_restart() {
+	restart_dock=1
+}
+
+_require_finder_restart() {
+	restart_finder=1
+}
+
+_require_full_disk_access() {
+	_mac_only || return
+	_has_full_disk_access && return
+	_fatal $e_no_full_disk "Terminal does not have Full Disk Access privilege."
+}
+
+_require_mac() {
+	[ "$( uname )" = 'Darwin' ] && return
+	_fatal $e_not_mac "This script must run on a Mac."
+}
+
+_require_ssh_key() {
+	ssh_key_path="$( _ssh_key_path )"
+
+	[ -n "$ssh_key_path" ] && return
+
+	_error "Missing setup SSH key."
+
+	getup_sshkey
+
+	[ ! -s "$setup_ssh_key" ] && _fatal $e_no_ssh_key "Setup SSH key must be in: $setup_ssh_key"
+}
+
+_repos_reminoutils() {
+cat << REPOS
+https://github.com/remino/sere.git
+REPOS
+}
+
+_ssh_key_path() {
+	for key_path in "$default_ssh_key" "$setup_ssh_key"
+	do
+		if [ -s "$key_path" ]
+		then
+			echo "$key_path"
+			return
+		fi
+	done
+
+	return 1
+}
+
+getup_main "$@"
+exit
