@@ -787,8 +787,8 @@ SETUP PORTIONS:
 	pamtouchid    Enable Touch ID for sudo via PAM. (macOS only.)
 	python        Install Python 2 and Python 3 using asdf.
 	reminoutils   Clone and link Rémino util repos.
-	safari        Set up Safari. Includes: safaridev.
-	safaridev     Enable Develop menu in Safari.
+	safari        Set up Safari. Includes: safaridev. (macOS only.)
+	safaridev     Enable Develop menu in Safari. (macOS only.)
 	secrets       Clone secret files from git repo at SECRETS_REPO_URL.
 	settings      Set up macOS preferences. Includes: dock, finder, safari.
 	shell         Change default shell to Zsh.
