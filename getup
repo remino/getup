@@ -1,7 +1,7 @@
 #!/bin/sh
 # getup
 
-VERSION='1.0.1'
+VERSION='1.1.0'
 
 getup_main() {
 	scriptpath="$0"
@@ -76,7 +76,6 @@ getup_main() {
 		shell|\
 		sshkey|\
 		workspace)
-			_pre
 			"getup_$cmd" "$@"
 			_post
 			;;
@@ -219,13 +218,13 @@ getup_crontab() {
 }
 
 getup_darkmode() {
-	_mac_only || return
+	_require_mac || return
 	_echo "Setting Dark Mode..."
 	osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to yes'
 }
 
 getup_dock() {
-	_mac_only || return
+	_require_mac || return
 	_require_full_disk_access
 
 	_echo "Setting up Dock..."
@@ -287,7 +286,7 @@ getup_dotfiles() {
 }
 
 getup_finder() {
-	_mac_only || return
+	_require_mac || return
 	_require_full_disk_access
 
 	_echo "Setting up Finder..."
@@ -344,7 +343,7 @@ getup_fonts() {
 }
 
 getup_fulldisk() {
-	_mac_only || return
+	_require_mac || return
 	if _has_full_disk_access
 	then
 		_echo "Script has Full Disk Access."
@@ -421,7 +420,7 @@ getup_homebrew() {
 }
 
 getup_masapps() {
-	_mac_only || return
+	_require_mac || return
 	_require mas
 
 	_mas_apps | while read -r id rest
@@ -457,7 +456,7 @@ getup_omzplugins() {
 }
 
 getup_pamtouchid() {
-	_mac_only || return
+	_require_mac || return
 
 	PAM_SUDO="/etc/pam.d/sudo"
 
@@ -565,7 +564,7 @@ getup_reminoutils() {
 }
 
 getup_safari() {
-	_mac_only || return
+	_require_mac || return
 	_require_full_disk_access
 
 	_echo "Setting up Safari..."
@@ -592,7 +591,7 @@ getup_safari() {
 }
 
 getup_safaridev() {
-	_mac_only || return
+	_require_mac || return
 	_require_full_disk_access
 
 	_echo "Enabling Develop menu in Safari and WebView..."
@@ -640,7 +639,7 @@ getup_secrets() {
 }
 
 getup_settings() {
-	_mac_only || return
+	_require_mac || return
 	_require_full_disk_access
 
 	# Speeding up wake from sleep to 24 hours from an hour
@@ -773,19 +772,19 @@ SETUP PORTIONS:
 	brewapps      Install Homebrew apps (non-cask).
 	brewcask      Install Homebrew cask apps.
 	crontab       Install crontab.
-	darkmode      Enable Dark Mode.
+	darkmode      Enable Dark Mode. (macOS only.)
 	dotfiles      Clone and set up dot files using yadm from DOTFILES_REPO_URL.
-	dock          Set up Dock.
+	dock          Set up Dock. (macOS only.)
 	cleanup       Clean up after setup.
-	finder        Set up Finder.
+	finder        Set up Finder. (macOS only.)
 	gcloud        Install GCloud.
 	gpg           Import private GPG key.
 	homebrew      Install Homebrew (not apps).
-	masapps       Install Mac App Store apps using mas.
+	masapps       Install Mac App Store apps using mas. (macOS only.)
 	mkdirs        Create extra empty dirs.
 	ohmyzsh       Install Oh My Zsh.
 	omzplugins    Install Oh My Zsh custom plugins.
-	pamtouchid    Enable Touch ID for sudo via PAM.
+	pamtouchid    Enable Touch ID for sudo via PAM. (macOS only.)
 	python        Install Python 2 and Python 3 using asdf.
 	reminoutils   Clone and link Rémino util repos.
 	safari        Set up Safari. Includes: safaridev.
@@ -879,10 +878,6 @@ _invalid_opt() {
 	exit $e_args
 }
 
-_is_mac() {
-	[ "$( uname )" = "Darwin" ]
-}
-
 _load_asdf() {
 	_exists asdf && return
 	for init in /usr/local/opt/asdf/libexec/asdf.sh /opt/homebrew/opt/asdf/libexec/asdf.sh
@@ -898,12 +893,6 @@ _load_gcloud() {
 	_exists gcloud && return
 	dir="$HOME/google-cloud-sdk/bin"
 	[ -d "$dir" ] && PATH="$dir:$PATH"
-}
-
-_mac_only() {
-	_is_mac && return
-	_error "This command is only available on macOS."
-	return $e_not_mac
 }
 
 _mas_apps() {
@@ -936,10 +925,6 @@ _post() {
 	[ $restart_dock -eq 1 ] && _echo "Restarting Dock..." && killall Dock
 	[ $restart_finder -eq 1 ] && _echo "Restarting Finder..." && killall Finder
 	[ $brew_cleanup -eq 1 ] && _echo "Cleaning up Homebrew..." && brew cleanup
-}
-
-_pre() {
-	_require_mac
 }
 
 _python_filter_latest_stable_version() {
@@ -997,7 +982,7 @@ _require_finder_restart() {
 }
 
 _require_full_disk_access() {
-	_mac_only || return
+	_require_mac || return
 	_has_full_disk_access && return
 	_fatal $e_no_full_disk "Terminal does not have Full Disk Access privilege."
 }
