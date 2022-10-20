@@ -42,7 +42,7 @@ getup_main() {
 	shift $(( OPTIND - 1 ))
 
 	[ -z "$cmd" ] && cmd="$1"
-	shift
+	[ $# -gt 0 ] && shift
 
 	[ -z "$cmd" ] && cmd="help"
 
