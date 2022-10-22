@@ -93,6 +93,9 @@ Until the following settings can be set automatically, they'll have to be done m
 - *Keyboard* tab:
 	- *Key Repeat* to fastest.
 	- *Delay Until Repeat* to shortest.
+	- *Modifier Keys...* panel:
+		- Set *Select keyboard* to *Karabiner DriverKit*.
+		- Set *Caps Lock* to *Escape*.
 - *Text* tab:
 	- Drag _Text Substitutions.plist_ file into this window to import.
 	- Uncheck *Correct spelling automatically*.
