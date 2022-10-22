@@ -120,7 +120,7 @@ Until the following settings can be set automatically, they'll have to be done m
 			- Click *Add*.
 	- Check *Use keyboard navigation to move focus between controls*.
 - *Input Sources* tab:
-  - Check *Use Caps Lock key to switch to and from last used Latin input source*.
+	- Check *Use Caps Lock key to switch to and from last used Latin input source*.
 
 ### *Language & Region* panel
 
