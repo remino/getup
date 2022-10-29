@@ -282,7 +282,7 @@ getup_dotfiles() {
 		yadm checkout .ssh/known_hosts
 	fi
 
-	getup_keys
+	getup_secrets
 }
 
 getup_finder() {
