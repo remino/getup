@@ -18,6 +18,7 @@ getup_main() {
 	e_not_mac=22
 	e_missing_username=26
 	e_missing_file=27
+	e_no_sudo=28
 
 	PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
 
@@ -396,7 +397,12 @@ getup_gpg() {
 }
 
 getup_homebrew() {
-	_require_full_disk_access
+	if _is_mac
+	then
+		_require_full_disk_access
+	else
+		_require_sudo_access
+	fi
 
 	if [ ! -x "/usr/local/bin/brew" ] && [ ! -x "/opt/homebrew/bin/brew" ]
 	then
@@ -1021,6 +1027,10 @@ _require_ssh_key() {
 	getup_sshkey
 
 	[ ! -s "$setup_ssh_key" ] && _fatal $e_no_ssh_key "Setup SSH key must be in: $setup_ssh_key"
+}
+
+_require_sudo_access() {
+	sudo -v || _fatal $e_no_sudo "User does not have sudo access."
 }
 
 _repos_reminoutils() {
