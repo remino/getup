@@ -399,8 +399,22 @@ getup_homebrew() {
 	if _is_mac
 	then
 		_require_full_disk_access
-	else
-		_require_sudo_access
+	elif ! _has_sudo_access
+	then
+		mkdir -p "$HOME/opt"
+
+		if [ -d "$HOME/opt/homebrew" ]
+		then
+			_echo "Homebrew already installed."
+		else
+			_echo "Installing Homebrew..."
+			git clone https://github.com/Homebrew/brew "$HOME/opt/homebrew"
+		fi
+
+		eval "$("$HOME/opt/homebrew/bin/brew" shellenv)"
+		brew update --force --quiet
+		chmod -R go-w "$(brew --prefix)/share/zsh"
+		return
 	fi
 
 	if [ ! -x "/usr/local/bin/brew" ] && [ ! -x "/opt/homebrew/bin/brew" ]
@@ -612,7 +626,7 @@ getup_safaridev() {
 }
 
 getup_secrets() {
-	_exists git-crypt || brew install git-crypt
+	_install_git_crypt
 	_require git-crypt
 
 	secrets_dir="$HOME/.secrets"
@@ -869,6 +883,10 @@ _has_full_disk_access() {
 	return 1
 }
 
+_has_sudo_access() {
+	sudo -v
+}
+
 _invalid_cmd() {
 	_error "Invalid command: $cmd"
 	_echo
@@ -883,19 +901,16 @@ _invalid_opt() {
 	exit $e_args
 }
 
+_install_git_crypt() {
+	_exists git-crypt && return
+	_exists brew || getup_homebrew
+	brew install git-crypt
+}
+
 _install_yadm() {
 	_exists yadm && return
-
-	if _is_mac
-	then
-		_exists brew || getup_homebrew
-		brew install yadm
-		return
-	fi
-
-	git clone https://github.com/TheLocehiliosan/yadm.git ~/.yadm-project
-	mkdir -p "$HOME/bin"
-	ln -s "../.yadm-project/yadm" "$HOME/bin/yadm"
+	_exists brew || getup_homebrew
+	brew install yadm
 }
 
 _is_mac() {
@@ -1029,7 +1044,7 @@ _require_ssh_key() {
 }
 
 _require_sudo_access() {
-	sudo -v || _fatal $e_no_sudo "User does not have sudo access."
+	_has_sudo_access || _fatal $e_no_sudo "User does not have sudo access."
 }
 
 _repos_reminoutils() {
