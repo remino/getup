@@ -265,8 +265,7 @@ getup_dotfiles() {
 		&& return 0
 
 	_require_ssh_key
-
-	_exists yadm || _install_yadm
+	_install_yadm
 
 	[ -z "$DOTFILES_REPO_URL" ] && _fatal $e_args "DOTFILES_REPO_URL not set."
 
