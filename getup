@@ -131,6 +131,7 @@ getup_brewapps() {
 		cmake \
 		coreutils \
 		docker-compose \
+		exa \
 		ffmpeg \
 		gh \
 		git \
