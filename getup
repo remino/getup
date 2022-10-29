@@ -264,9 +264,8 @@ getup_dotfiles() {
 		&& return 0
 
 	_require_ssh_key
-	_require brew yadm
 
-	_exists yadm || brew install yadm
+	_exists_yadm || _install_yadm
 
 	[ -z "$DOTFILES_REPO_URL" ] && _fatal $e_args "DOTFILES_REPO_URL not set."
 
@@ -879,6 +878,25 @@ _invalid_opt() {
 	exit $e_args
 }
 
+_install_yadm() {
+	_exists yadm && return
+
+	if _is_mac
+	then
+		_exists brew || getup_homebrew
+		brew install yadm
+		return
+	fi
+
+	git clone https://github.com/TheLocehiliosan/yadm.git ~/.yadm-project
+	mkdir -p "$HOME/bin"
+	ln -s "../.yadm-project/yadm" "$HOME/bin/yadm"
+}
+
+_is_mac() {
+	[ "$( uname )" = 'Darwin' ]
+}
+
 _load_asdf() {
 	_exists asdf && return
 	for init in /usr/local/opt/asdf/libexec/asdf.sh /opt/homebrew/opt/asdf/libexec/asdf.sh
@@ -989,7 +1007,7 @@ _require_full_disk_access() {
 }
 
 _require_mac() {
-	[ "$( uname )" = 'Darwin' ] && return
+	_is_mac && return
 	_fatal $e_not_mac "This script must run on a Mac."
 }
 
