@@ -27,7 +27,7 @@ getup_main() {
 	full_disk_access=0
 	restart_dock=0
 	restart_finder=0
-	setup_ssh_key="$HOME/.setup_ssh_key"
+	setup_ssh_key="$HOME/.${scriptname}_ssh_key"
 
 	while getopts hvy opt
 	do
