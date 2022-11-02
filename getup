@@ -466,11 +466,16 @@ getup_ohmyzsh() {
 }
 
 getup_omzplugins() {
-	[ ! -d "$HOME/.oh-my-zsh/custom/plugins" ] && getup_ohmyzsh
+	[ ! -d "$HOME/.oh-my-zsh/custom" ] && getup_ohmyzsh
 
-	_omzplugins | while read -r url name
+	_omz_plugins | while read -r url name
 	do
 		git clone "$url" "$HOME/.oh-my-zsh/custom/plugins/$name"
+	done
+
+	_omz_themes | while read -r url name
+	do
+		git clone "$url" "$HOME/.oh-my-zsh/custom/themes/$name"
 	done
 }
 
@@ -952,14 +957,20 @@ cat << APPS
 APPS
 }
 
-_omzplugins() {
+_omz_plugins() {
 cat << PLUGINS
 https://github.com/tamcore/autoupdate-oh-my-zsh-plugins autoupdate
 https://github.com/remino/omz-plugin-git-aliases git-aliases
 https://github.com/remino/omz-plugin-mysql-alias mysql-alias
+https://github.com/romkatv/powerlevel10k.git powerlevel10k
 PLUGINS
 }
 
+_omz_themes() {
+cat << THEMES
+https://github.com/romkatv/powerlevel10k.git powerlevel10k
+THEMES
+}
 _post() {
 	[ $restart_dock -eq 1 ] && _echo "Restarting Dock..." && killall Dock
 	[ $restart_finder -eq 1 ] && _echo "Restarting Finder..." && killall Finder
