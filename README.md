@@ -51,7 +51,7 @@ chmod a+x getup
 ## Usage
 
 ```
-getup 1.2.0
+getup 1.2.1
 
 Usage: getup [<options>] <command>
 
