@@ -68,6 +68,7 @@ getup_main() {
 		ohmyzsh|\
 		omzplugins|\
 		pamtouchid|\
+		private|\
 		python|\
 		reminoutils|\
 		safari|\
@@ -282,6 +283,7 @@ getup_dotfiles() {
 		yadm checkout .ssh/known_hosts
 	fi
 
+	getup_private
 	getup_secrets
 }
 
@@ -530,6 +532,25 @@ getup_pamtouchid() {
 	else
 		echo "Already there"
 	fi
+}
+
+getup_private() {
+	_install_git_crypt
+	_require git-crypt
+
+	private_dir="$HOME/.private"
+
+	[ -z "$PRIVATE_REPO_URL" ] && _fatal $e_args "Missing PRIVATE_REPO_URL"
+
+	if [ -d "$private_dir" ]
+	then
+		_error "Private repo was already cloned."
+	else
+		GIT_SSH_COMMAND="ssh -i '$( _ssh_key_path )'" \
+			git clone "$PRIVATE_REPO_URL" "$private_dir"
+	fi
+
+	chmod -R go-rwx "$HOME/.ssh"
 }
 
 getup_python() {
@@ -813,6 +834,7 @@ SETUP PORTIONS:
 	reminoutils   Clone and link Rémino util repos.
 	safari        Set up Safari. Includes: safaridev. (macOS only.)
 	safaridev     Enable Develop menu in Safari. (macOS only.)
+	private       Clone private repo at PRIVATE_REPO_URL.
 	secrets       Clone secret files from git repo at SECRETS_REPO_URL.
 	settings      Set up macOS preferences. Includes: dock, finder, safari.
 	shell         Change default shell to Zsh.
