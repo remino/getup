@@ -984,6 +984,7 @@ cat << PLUGINS
 https://github.com/tamcore/autoupdate-oh-my-zsh-plugins autoupdate
 https://github.com/remino/omz-plugin-git-aliases git-aliases
 https://github.com/remino/omz-plugin-mysql-alias mysql-alias
+https://github.com/romkatv/powerlevel10k.git powerlevel10k
 PLUGINS
 }
 
