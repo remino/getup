@@ -51,7 +51,7 @@ chmod a+x getup
 ## Usage
 
 ```
-getup 1.0.0
+getup 1.2.0
 
 Usage: getup [<options>] <command>
 
@@ -63,23 +63,23 @@ SETUP PORTIONS:
 	brewapps      Install Homebrew apps (non-cask).
 	brewcask      Install Homebrew cask apps.
 	crontab       Install crontab.
-	darkmode      Enable Dark Mode.
+	darkmode      Enable Dark Mode. (macOS only.)
 	dotfiles      Clone and set up dot files using yadm from DOTFILES_REPO_URL.
-	dock          Set up Dock.
+	dock          Set up Dock. (macOS only.)
 	cleanup       Clean up after setup.
-	finder        Set up Finder.
+	finder        Set up Finder. (macOS only.)
 	gcloud        Install GCloud.
 	gpg           Import private GPG key.
 	homebrew      Install Homebrew (not apps).
-	masapps       Install Mac App Store apps using mas.
+	masapps       Install Mac App Store apps using mas. (macOS only.)
 	mkdirs        Create extra empty dirs.
 	ohmyzsh       Install Oh My Zsh.
 	omzplugins    Install Oh My Zsh custom plugins.
-	pamtouchid    Enable Touch ID for sudo via PAM.
+	pamtouchid    Enable Touch ID for sudo via PAM. (macOS only.)
 	python        Install Python 2 and Python 3 using asdf.
 	reminoutils   Clone and link Rémino util repos.
-	safari        Set up Safari. Includes: safaridev.
-	safaridev     Enable Develop menu in Safari.
+	safari        Set up Safari. Includes: safaridev. (macOS only.)
+	safaridev     Enable Develop menu in Safari. (macOS only.)
 	secrets       Clone secret files from git repo at SECRETS_REPO_URL.
 	settings      Set up macOS preferences. Includes: dock, finder, safari.
 	shell         Change default shell to Zsh.
@@ -89,8 +89,11 @@ SETUP PORTIONS:
 COMMANDS:
 
 	all           Setup all the portions listed above.
+	config        Show options set by .getuprc.
 	fulldisk      Check whether or not script has Full Disk Access.
 	help          Show this help screen.
+	prep          Generate blank .getuprc option file in current directory.
+	update        Update script itself.
 	version       Show version.
 
 OPTIONS:
