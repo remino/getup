@@ -9,6 +9,8 @@ getup_main() {
 	scriptdir="$( dirname "$scriptpath" )"
 	scriptpath="$( cd "$scriptdir" || exit; pwd )/$scriptname"
 
+	_init
+
 	e_args=16
 	e_no_full_disk=17
 	e_missing_app=18
@@ -53,6 +55,7 @@ getup_main() {
 		brewapps|\
 		brewcask|\
 		cleanup|\
+		config|\
 		crontab|\
 		darkmode|\
 		dock|\
@@ -68,6 +71,7 @@ getup_main() {
 		ohmyzsh|\
 		omzplugins|\
 		pamtouchid|\
+		prep|\
 		python|\
 		reminoutils|\
 		safari|\
@@ -204,6 +208,14 @@ getup_brewcask() {
 getup_cleanup() {
 	_echo "Cleaning up..."
 	[ -f "$setup_ssh_key" ] && rm "$setup_ssh_key"
+}
+
+getup_config() {
+cat <<CONFIG
+DOTFILES_REPO_URL=$DOTFILES_REPO_URL
+SECRETS_REPO_URL=$SECRETS_REPO_URL
+WORKSPACE_REPO_URL=$WORKSPACE_REPO_URL
+CONFIG
 }
 
 getup_crontab() {
@@ -532,6 +544,18 @@ getup_pamtouchid() {
 	fi
 }
 
+getup_prep() {
+	rc=".getuprc"
+
+cat <<RC > "$rc"
+DOTFILES_REPO_URL=
+SECRETS_REPO_URL=
+WORKSPACE_REPO_URL=
+RC
+
+	_echo "$rc"
+}
+
 getup_python() {
 	_exists asdf || brew install asdf
 
@@ -822,8 +846,10 @@ SETUP PORTIONS:
 COMMANDS:
 
 	all           Setup all the portions listed above.
+	config        Show options set by .getuprc.
 	fulldisk      Check whether or not script has Full Disk Access.
 	help          Show this help screen.
+	prep          Generate blank .getuprc option file in current directory.
 	version       Show version.
 
 OPTIONS:
@@ -890,6 +916,26 @@ _has_full_disk_access() {
 
 _has_sudo_access() {
 	sudo -v
+}
+
+_init() {
+	for rc in "/etc/getuprc" "$HOME/.getuprc" "$scriptdir/.getuprc" "$PWD/.getuprc"
+	do
+		if [ -f "$rc" ]
+		then
+			eval "$(
+				# shellcheck source=/dev/null
+				. "$rc"
+				echo "DOTFILES_REPO_URL=$DOTFILES_REPO_URL"
+				echo "SECRETS_REPO_URL=$SECRETS_REPO_URL"
+				echo "WORKSPACE_REPO_URL=$WORKSPACE_REPO_URL"
+			)"
+
+			[ -n "$DOTFILES_REPO_URL" ] && export DOTFILES_REPO_URL
+			[ -n "$SECRETS_REPO_URL" ] && export SECRETS_REPO_URL
+			[ -n "$WORKSPACE_REPO_URL" ] && export WORKSPACE_REPO_URL
+		fi
+	done
 }
 
 _invalid_cmd() {
