@@ -814,6 +814,7 @@ getup_update() {
 	[ $res -ne 0 ] && _fatal $e_cannot_update "Failed to update getup script."
 	chmod a+x "$scriptpath"
 	"$scriptpath" version
+	exit
 }
 
 getup_usage() {
