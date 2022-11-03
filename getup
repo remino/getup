@@ -21,6 +21,7 @@ getup_main() {
 	e_missing_username=26
 	e_missing_file=27
 	e_no_sudo=28
+	e_cannot_update=29
 
 	PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
 
@@ -80,6 +81,7 @@ getup_main() {
 		settings|\
 		shell|\
 		sshkey|\
+		update|\
 		workspace)
 			"getup_$cmd" "$@"
 			_post
@@ -806,6 +808,14 @@ getup_workspace() {
 	fi
 }
 
+getup_update() {
+	curl -sL https://raw.githubusercontent.com/remino/getup/master/getup > "$scriptpath"
+	res=$?
+	[ $res -ne 0 ] && _fatal $e_cannot_update "Failed to update getup script."
+	chmod a+x "$scriptpath"
+	"$scriptpath" version
+}
+
 getup_usage() {
 cat <<USAGE
 $scriptname $VERSION
@@ -850,6 +860,7 @@ COMMANDS:
 	fulldisk      Check whether or not script has Full Disk Access.
 	help          Show this help screen.
 	prep          Generate blank .getuprc option file in current directory.
+	update        Update script itself.
 	version       Show version.
 
 OPTIONS:
