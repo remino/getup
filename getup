@@ -1029,6 +1029,7 @@ cat << THEMES
 https://github.com/romkatv/powerlevel10k.git powerlevel10k
 THEMES
 }
+
 _post() {
 	[ $restart_dock -eq 1 ] && _echo "Restarting Dock..." && killall Dock
 	[ $restart_finder -eq 1 ] && _echo "Restarting Finder..." && killall Finder
