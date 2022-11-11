@@ -350,10 +350,18 @@ getup_finder() {
 }
 
 getup_fonts() {
+	_require_mac || return
+
 	_error "Installing fonts..."
 
 	brew tap homebrew/cask-fonts
-	brew install font-sarasa-gothic
+	brew install \
+		font-iosevka \
+		font-sarasa-gothic \
+		font-montserrat \
+		font-montserrat-alternates \
+		font-nunito-sans \
+	;
 }
 
 getup_fulldisk() {
