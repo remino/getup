@@ -81,6 +81,7 @@ getup_main() {
 		settings|\
 		shell|\
 		sshkey|\
+		tpm|\
 		update|\
 		workspace)
 			"getup_$cmd" "$@"
@@ -113,6 +114,7 @@ getup_all() {
 		homebrew \
 		brewapps \
 		brewcask \
+		tpm \
 		asdf \
 		masapps \
 		python \
@@ -792,6 +794,27 @@ getup_sshkey() {
 	[ ! -s "$setup_ssh_key" ] && _fatal $e_no_ssh_key "File seems empty or missing: $setup_ssh_key"
 }
 
+getup_tpm() {
+	# TODO Must be a better way to check and install tmux across multiple platforms.
+	if ! _exists tmux
+	then
+		if _exists apt
+		then
+			apt install tmux
+		elif _exists brew
+		then
+			brew install tmux
+		fi
+	fi
+
+	tpm_dir="$HOME/.config/tmux/plugins/tpm"
+
+	[ -d "$tpm_dir" ] && _echo "tpm already installed."
+
+	_echo "Installing Tmux Plugin Manager (tpm)..."
+	git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
+}
+
 getup_workspace() {
 	_require_ssh_key
 
@@ -863,6 +886,7 @@ SETUP PORTIONS:
 	settings      Set up macOS preferences. Includes: dock, finder, safari.
 	shell         Change default shell to Zsh.
 	sshkey        Add setup SSH key.
+	tpm           Install Tmux Plugin Manager (tpm).
 	workspace     Clone and set up workspace from WORKSPACE_REPO_URL.
 
 COMMANDS:
