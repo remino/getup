@@ -135,10 +135,12 @@ getup_brewapps() {
 		asdf \
 		awscli \
 		bat \
+		bat-extras \
 		cmake \
 		coreutils \
 		docker-compose \
 		exa \
+		fd \
 		ffmpeg \
 		gh \
 		git \
@@ -158,6 +160,7 @@ getup_brewapps() {
 		shellcheck \
 		terraform \
 		tmux \
+		transcrypt \
 		trash \
 		tree \
 		wget \
