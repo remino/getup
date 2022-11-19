@@ -143,7 +143,9 @@ getup_brewapps() {
 		docker-compose \
 		exa \
 		fd \
+		figlet \
 		ffmpeg \
+		fortune \
 		gh \
 		git \
 		git-crypt \
@@ -151,6 +153,7 @@ getup_brewapps() {
 		imagemagick \
 		jq \
 		karabiner-elements \
+		lolcat \
 		mas \
 		mysql-client \
 		openssl \
