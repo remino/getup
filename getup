@@ -73,11 +73,11 @@ getup_main() {
 		omzplugins|\
 		pamtouchid|\
 		prep|\
+		private|\
 		python|\
 		reminoutils|\
 		safari|\
 		safaridev|\
-		secrets|\
 		settings|\
 		shell|\
 		sshkey|\
@@ -224,7 +224,7 @@ getup_cleanup() {
 getup_config() {
 cat <<CONFIG
 DOTFILES_REPO_URL=$DOTFILES_REPO_URL
-SECRETS_REPO_URL=$SECRETS_REPO_URL
+PRIVATE_REPO_URL=$PRIVATE_REPO_URL
 WORKSPACE_REPO_URL=$WORKSPACE_REPO_URL
 CONFIG
 }
@@ -568,11 +568,43 @@ getup_prep() {
 
 cat <<RC > "$rc"
 DOTFILES_REPO_URL=
-SECRETS_REPO_URL=
+PRIVATE_REPO_URL=
 WORKSPACE_REPO_URL=
 RC
 
 	_echo "$rc"
+}
+
+getup_private() {
+	_install_git_crypt
+	_require git-crypt
+
+	private_dir="$HOME/.private"
+
+	[ -z "$PRIVATE_REPO_URL" ] && _fatal $e_args "Missing PRIVATE_REPO_URL"
+
+	if [ -d "$private_dir" ]
+	then
+		_error "private were already cloned."
+	else
+		GIT_SSH_COMMAND="ssh -i '$( _ssh_key_path )'" \
+			git clone "$PRIVATE_REPO_URL" "$private_dir"
+	fi
+
+	GIT_WORK_TREE="$private_dir" GIT_DIR="$private_dir/.git" \
+		git-crypt unlock
+	result=$?
+
+	if [ $result -gt 0 ]
+	then
+		_error "It looks like unlocking the private failed."
+		_error "Try importing your private GPG key first: $scriptname gpg"
+	fi
+
+	chmod -R go-rwx \
+		"$HOME/.netrc" \
+		"$HOME/.ssh" \
+		;
 }
 
 getup_python() {
@@ -671,38 +703,6 @@ getup_safaridev() {
 
 	# Adding a context menu item for showing the Web Inspector in web views
 	defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
-}
-
-getup_secrets() {
-	_install_git_crypt
-	_require git-crypt
-
-	secrets_dir="$HOME/.secrets"
-
-	[ -z "$SECRETS_REPO_URL" ] && _fatal $e_args "Missing SECRETS_REPO_URL"
-
-	if [ -d "$secrets_dir" ]
-	then
-		_error "Secrets were already cloned."
-	else
-		GIT_SSH_COMMAND="ssh -i '$( _ssh_key_path )'" \
-			git clone "$SECRETS_REPO_URL" "$secrets_dir"
-	fi
-
-	GIT_WORK_TREE="$secrets_dir" GIT_DIR="$secrets_dir/.git" \
-		git-crypt unlock
-	result=$?
-
-	if [ $result -gt 0 ]
-	then
-		_error "It looks like unlocking the secrets failed."
-		_error "Try importing your private GPG key first: $scriptname gpg"
-	fi
-
-	chmod -R go-rwx \
-		"$HOME/.netrc" \
-		"$HOME/.ssh" \
-		;
 }
 
 getup_settings() {
@@ -894,11 +894,11 @@ SETUP PORTIONS:
 	ohmyzsh       Install Oh My Zsh.
 	omzplugins    Install Oh My Zsh custom plugins.
 	pamtouchid    Enable Touch ID for sudo via PAM. (macOS only.)
+	private       Clone secret files from git repo at PRIVATE_REPO_URL.
 	python        Install Python 2 and Python 3 using asdf.
 	reminoutils   Clone and link Rémino util repos.
 	safari        Set up Safari. Includes: safaridev. (macOS only.)
 	safaridev     Enable Develop menu in Safari. (macOS only.)
-	secrets       Clone secret files from git repo at SECRETS_REPO_URL.
 	settings      Set up macOS preferences. Includes: dock, finder, safari.
 	shell         Change default shell to Zsh.
 	sshkey        Add setup SSH key.
@@ -991,12 +991,12 @@ _init() {
 				# shellcheck source=/dev/null
 				. "$rc"
 				echo "DOTFILES_REPO_URL=$DOTFILES_REPO_URL"
-				echo "SECRETS_REPO_URL=$SECRETS_REPO_URL"
+				echo "PRIVATE_REPO_URL=$PRIVATE_REPO_URL"
 				echo "WORKSPACE_REPO_URL=$WORKSPACE_REPO_URL"
 			)"
 
 			[ -n "$DOTFILES_REPO_URL" ] && export DOTFILES_REPO_URL
-			[ -n "$SECRETS_REPO_URL" ] && export SECRETS_REPO_URL
+			[ -n "$PRIVATE_REPO_URL" ] && export PRIVATE_REPO_URL
 			[ -n "$WORKSPACE_REPO_URL" ] && export WORKSPACE_REPO_URL
 		fi
 	done
