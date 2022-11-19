@@ -82,6 +82,7 @@ getup_main() {
 		shell|\
 		sshkey|\
 		tpm|\
+		transcrypt|\
 		update|\
 		workspace)
 			"getup_$cmd" "$@"
@@ -818,6 +819,18 @@ getup_tpm() {
 	git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
 }
 
+getup_transcrypt() {
+	if _exists transcrypt
+	then
+		_echo "Transcrypt is already installed:"
+		which transcrypt
+		return
+	fi
+
+	_echo "Installing Transcrypt..."
+	_install_transcrypt
+}
+
 getup_workspace() {
 	_require_ssh_key
 
@@ -890,6 +903,7 @@ SETUP PORTIONS:
 	shell         Change default shell to Zsh.
 	sshkey        Add setup SSH key.
 	tpm           Install Tmux Plugin Manager (tpm).
+	transcrypt    Install Transcrypt.
 	workspace     Clone and set up workspace from WORKSPACE_REPO_URL.
 
 COMMANDS:
@@ -1006,6 +1020,24 @@ _install_git_crypt() {
 	_exists git-crypt && return
 	_exists brew || getup_homebrew
 	brew install git-crypt
+}
+
+_install_transcrypt() {
+	_exists transcrypt && return
+
+	if _exists brew
+	then
+		brew install transcrypt
+		return
+	fi
+
+	if [ ! -d "$HOME/.transcrypt" ]
+	then
+		git clone https://github.com/elasticdog/transcrypt.git "$HOME/.transcrypt"
+		[ ! -d "$HOME/bin" ] && mkdir -p "$HOME/bin"
+		[ -e "$HOME/bin/transcrypt" ] && return
+		ln -s "../.transcrypt/transcrypt" "$HOME/bin/transcrypt"
+	fi
 }
 
 _install_yadm() {
