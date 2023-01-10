@@ -157,6 +157,7 @@ getup_brewapps() {
 		lolcat \
 		mas \
 		mysql-client \
+		nmap \
 		openssl \
 		p7zip \
 		pam-reattach \
