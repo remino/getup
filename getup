@@ -240,7 +240,7 @@ getup_crontab() {
 
 	[ ! -f "$crontab" ] \
 		&& _error "No crontab found: $crontab" \
-		&& return $e_missing_file
+		&& return "$e_missing_file"
 
 	_echo "Installing crontab..."
 	crontab "$crontab"
@@ -294,10 +294,10 @@ getup_dotfiles() {
 	_require_ssh_key
 	_install_yadm
 
-	[ -z "$DOTFILES_REPO_URL" ] && _fatal $e_args "DOTFILES_REPO_URL not set."
+	[ -z "$DOTFILES_REPO_URL" ] && _fatal "$e_args" "DOTFILES_REPO_URL not set."
 
 	ghuser="$( whoami | sed 's/\./-/g' )"
-	[ -z "$ghuser" ] && _fatal $e_missing_username "Missing username"
+	[ -z "$ghuser" ] && _fatal "$e_missing_username" "Missing username"
 
 	if [ -d "$HOME/.local/share/yadm/repo.git" ]
 	then
@@ -522,7 +522,7 @@ getup_pamtouchid() {
 
 	_echo "Adding Touch ID to PAM for sudo..."
 
-	if [ $force_yes -eq 0 ]
+	if [ "$force_yes" -eq 0 ]
 	then
 		_echo
 		_echo "WARNING: This will add Touch ID to PAM so it can be used"
@@ -537,7 +537,7 @@ getup_pamtouchid() {
 		if ! _confirm "Do you wish to add Touch ID to PAM?"
 		then
 			_error "Aborted addition of Touch ID to PAM."
-			return $e_aborted
+			return "$e_aborted"
 		fi
 	fi
 
@@ -586,7 +586,7 @@ getup_private() {
 
 	private_dir="$HOME/.private"
 
-	[ -z "$PRIVATE_REPO_URL" ] && _fatal $e_args "Missing PRIVATE_REPO_URL"
+	[ -z "$PRIVATE_REPO_URL" ] && _fatal "$e_args" "Missing PRIVATE_REPO_URL"
 
 	if [ -d "$private_dir" ]
 	then
@@ -600,7 +600,7 @@ getup_private() {
 		git-crypt unlock
 	result=$?
 
-	if [ $result -gt 0 ]
+	if [ "$result" -gt 0 ]
 	then
 		_error "It looks like unlocking the private failed."
 		_error "Try importing your private GPG key first: $scriptname gpg"
@@ -800,7 +800,7 @@ getup_sshkey() {
 
 	cat > "$setup_ssh_key"
 
-	[ ! -s "$setup_ssh_key" ] && _fatal $e_no_ssh_key "File seems empty or missing: $setup_ssh_key"
+	[ ! -s "$setup_ssh_key" ] && _fatal "$e_no_ssh_key" "File seems empty or missing: $setup_ssh_key"
 }
 
 getup_tpm() {
@@ -846,7 +846,7 @@ getup_workspace() {
 
 	_echo "Setting up workspace and related repos..."
 
-	[ -z "$WORKSPACE_REPO_URL" ] && _fatal $e_args "Missing WORKSPACE_REPO_URL"
+	[ -z "$WORKSPACE_REPO_URL" ] && _fatal "$e_args" "Missing WORKSPACE_REPO_URL"
 
 	if [ ! -d "$HOME/Sites/workspace" ]
 	then
@@ -859,14 +859,14 @@ getup_workspace() {
 		"$HOME/Sites/workspace/workspace" clone "$HOME/Sites"
 	else
 		_error "Missing workspace script."
-		return $e_missing_app
+		return "$e_missing_app"
 	fi
 }
 
 getup_update() {
 	curl -sL https://raw.githubusercontent.com/remino/getup/master/getup > "$scriptpath"
 	res=$?
-	[ $res -ne 0 ] && _fatal $e_cannot_update "Failed to update getup script."
+	[ "$res" -ne 0 ] && _fatal "$e_cannot_update" "Failed to update getup script."
 	chmod a+x "$scriptpath"
 	"$scriptpath" version
 	exit
@@ -970,7 +970,7 @@ _fatal() {
 }
 
 _has_full_disk_access() {
-	[ $full_disk_access -eq 1 ] && return 0
+	[ "$full_disk_access" -eq 1 ] && return 0
 
 	file=/Library/Preferences/com.apple.TimeMachine.plist
 
@@ -1148,9 +1148,9 @@ _require() {
 		fi
 	done
 
-	if [ $missing_app -ne 0 ]
+	if [ "$missing_app" -ne 0 ]
 	then
-		_fatal $e_missing_app "One or more executables or apps are missing."
+		_fatal "$e_missing_app" "One or more executables or apps are missing."
 	fi
 }
 
@@ -1169,12 +1169,12 @@ _require_finder_restart() {
 _require_full_disk_access() {
 	_require_mac || return
 	_has_full_disk_access && return
-	_fatal $e_no_full_disk "Terminal does not have Full Disk Access privilege."
+	_fatal "$e_no_full_disk" "Terminal does not have Full Disk Access privilege."
 }
 
 _require_mac() {
 	_is_mac && return
-	_fatal $e_not_mac "This script must run on a Mac."
+	_fatal "$e_not_mac" "This script must run on a Mac."
 }
 
 _require_ssh_key() {
@@ -1186,11 +1186,11 @@ _require_ssh_key() {
 
 	getup_sshkey
 
-	[ ! -s "$setup_ssh_key" ] && _fatal $e_no_ssh_key "Setup SSH key must be in: $setup_ssh_key"
+	[ ! -s "$setup_ssh_key" ] && _fatal "$e_no_ssh_key" "Setup SSH key must be in: $setup_ssh_key"
 }
 
 _require_sudo_access() {
-	_has_sudo_access || _fatal $e_no_sudo "User does not have sudo access."
+	_has_sudo_access || _fatal "$e_no_sudo" "User does not have sudo access."
 }
 
 _repos_reminoutils() {
