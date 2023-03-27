@@ -1,5 +1,6 @@
 #!/bin/sh
 # getup
+# shellcheck disable=SC2317
 
 VERSION='1.2.1'
 
@@ -151,6 +152,7 @@ getup_brewapps() {
 		git \
 		git-crypt \
 		git-extras \
+		grc \
 		imagemagick \
 		jq \
 		karabiner-elements \
