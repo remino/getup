@@ -265,6 +265,9 @@ Until the following settings can be set automatically, they'll have to be done m
 
 - *General* tab:
 	- Set *Raycast Hotkey* to *Cmd+Space*. (Be sure to set the keyboard shortcut for Spotlight first. See [*Keyboard* panel](#keyboard-panel).)
+- *Extensions* tab:
+  - Clear keyboard shortcut for *Navigation > Switch Windows*. (`Alt+Tab` should be reserved for _AltTab_.)
+
 ## *Safari*
 
 ### *Preferences* panel
