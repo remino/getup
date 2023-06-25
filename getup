@@ -170,6 +170,7 @@ getup_brewapps() {
 		shellcheck \
 		terraform \
 		tmux \
+		topnotch \
 		transcrypt \
 		trash \
 		tree \
