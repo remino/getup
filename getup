@@ -136,6 +136,7 @@ getup_brewapps() {
 	_echo "Installing Homebrew apps (non-cask)..."
 
 	brew install \
+		alt-tab \
 		asdf \
 		awscli \
 		bat \
