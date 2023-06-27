@@ -159,6 +159,7 @@ getup_brewapps() {
 		karabiner-elements \
 		lolcat \
 		mas \
+		mc \
 		mysql-client \
 		nmap \
 		openssl \
