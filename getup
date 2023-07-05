@@ -373,12 +373,12 @@ getup_fonts() {
 	brew tap homebrew/cask-fonts
 	brew install \
 		font-iosevka \
-		font-sarasa-gothic \
 		font-montserrat \
 		font-montserrat-alternates \
 		font-nunito-sans \
 		font-work-sans \
 	;
+	brew install jonz94/sarasa-nerd-fonts/font-sarasa-nerd-font-ttc
 }
 
 getup_fulldisk() {
