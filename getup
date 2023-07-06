@@ -205,7 +205,6 @@ getup_brewcask() {
 		1password \
 		1password-cli \
 		box-sync \
-		cheatsheet \
 		choosy \
 		docker \
 		emojipedia \
