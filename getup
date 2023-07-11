@@ -1096,6 +1096,7 @@ _omz_plugins() {
 cat << PLUGINS
 https://github.com/tamcore/autoupdate-oh-my-zsh-plugins autoupdate
 https://github.com/remino/omz-plugin-git-aliases git-aliases
+https://github.com/remino/omz-plugin-mycli-alias mycli-alias
 https://github.com/remino/omz-plugin-mysql-alias mysql-alias
 https://github.com/ntnyq/omz-plugin-pnpm.git pnpm
 https://github.com/romkatv/powerlevel10k.git powerlevel10k
